@@ -31,9 +31,12 @@ import com.alexdisler.inapppurchases.IabHelper.OnConsumeFinishedListener;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
-public class InAppBillingV3 extends CordovaPlugin {
+public class InAppBillingV6 extends CordovaPlugin {
+
+  public static final int BILLING_API_VERSION = 6;
 
   protected static final String TAG = "google.payments";
 
@@ -204,6 +207,26 @@ public class InAppBillingV3 extends CordovaPlugin {
       callbackContext.error(makeError("Invalid SKU", INVALID_ARGUMENTS));
       return false;
     }
+
+    final Bundle extraParams;
+    try {
+      JSONObject arg1 = args.optJSONObject(1);
+      String accountId = arg1.optString("accountId");
+      Boolean replaceSkusProration = arg1.optBoolean("replaceSkusProration", true);
+      JSONArray skusToReplaceJson = arg1.optJSONArray("skusToReplace");
+      ArrayList<String> skusToReplace = new ArrayList<String>();
+      for (int i = 0; i < skusToReplaceJson.length(); i++) {
+        skusToReplace.add(skusToReplaceJson.getString(i));
+      }
+      extraParams = new Bundle();
+      extraParams.putString("accountId", accountId);
+      extraParams.putBoolean("replaceSkusProration", replaceSkusProration);
+      extraParams.putStringArrayList("skusToReplace", skusToReplace);
+    } catch (JSONException e) {
+      callbackContext.error(makeError("Invalid extraParams", INVALID_ARGUMENTS));
+      return false;
+    }
+
     if (iabHelper == null || !billingInitialized) {
       callbackContext.error(makeError("Billing is not initialized", BILLING_NOT_INITIALIZED));
       return false;
@@ -247,9 +270,9 @@ public class InAppBillingV3 extends CordovaPlugin {
       }
     };
     if(subscribe){
-      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "");
+      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
     } else {
-      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "");
+      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
     }
     return true;
   }
