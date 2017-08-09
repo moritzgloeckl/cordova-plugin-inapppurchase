@@ -56,12 +56,12 @@ inAppPurchase.getProducts = (productIds) => {
   });
 };
 
-const executePaymentOfType = (type, productId) => {
+const executePaymentOfType = (type, productId, oldProductId) => {
   return new Promise((resolve, reject) => {
     if (!inAppPurchase.utils.validString(productId)) {
       reject(new Error(inAppPurchase.utils.errors[102]));
     } else {
-      nativeCall(type, [productId]).then((res) => {
+      nativeCall(type, [productId, oldProductId]).then((res) => {
         resolve({
           signature: res.signature,
           productId: res.productId,
@@ -76,11 +76,15 @@ const executePaymentOfType = (type, productId) => {
 };
 
 inAppPurchase.buy = (productId) => {
-  return executePaymentOfType('buy', productId);
+  return executePaymentOfType('buy', productId, null);
 };
 
 inAppPurchase.subscribe = (productId) => {
-  return executePaymentOfType('subscribe', productId);
+  return executePaymentOfType('subscribe', productId, null);
+};
+
+inAppPurchase.update = (productId, oldProductId) => {
+  return executePaymentOfType('update', productId, oldProductId);
 };
 
 inAppPurchase.consume = (type, receipt, signature) => {

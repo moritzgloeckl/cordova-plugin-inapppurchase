@@ -167,6 +167,8 @@ public class InAppBillingV6 extends CordovaPlugin {
       return buy(args, callbackContext);
     } else if ("subscribe".equals(action)) {
       return subscribe(args, callbackContext);
+    } else if ("update".equals(action)) {
+      return update(args, callbackContext);
     } else if ("consumePurchase".equals(action)) {
       return consumePurchase(args, callbackContext);
     } else if ("getSkuDetails".equals(action)) {
@@ -199,7 +201,7 @@ public class InAppBillingV6 extends CordovaPlugin {
     return true;
   }
 
-  protected boolean runPayment(final JSONArray args, final CallbackContext callbackContext, boolean subscribe) {
+  protected boolean runPayment(final JSONArray args, final CallbackContext callbackContext, boolean subscribe, boolean updateSubscription) {
     final String sku;
     try {
       sku = args.getString(0);
@@ -208,24 +210,7 @@ public class InAppBillingV6 extends CordovaPlugin {
       return false;
     }
 
-    final Bundle extraParams;
-    try {
-      JSONObject arg1 = args.optJSONObject(1);
-      String accountId = arg1.optString("accountId");
-      Boolean replaceSkusProration = arg1.optBoolean("replaceSkusProration", true);
-      JSONArray skusToReplaceJson = arg1.optJSONArray("skusToReplace");
-      ArrayList<String> skusToReplace = new ArrayList<String>();
-      for (int i = 0; i < skusToReplaceJson.length(); i++) {
-        skusToReplace.add(skusToReplaceJson.getString(i));
-      }
-      extraParams = new Bundle();
-      extraParams.putString("accountId", accountId);
-      extraParams.putBoolean("replaceSkusProration", replaceSkusProration);
-      extraParams.putStringArrayList("skusToReplace", skusToReplace);
-    } catch (JSONException e) {
-      callbackContext.error(makeError("Invalid extraParams", INVALID_ARGUMENTS));
-      return false;
-    }
+    final Bundle extraParams = new Bundle();
 
     if (iabHelper == null || !billingInitialized) {
       callbackContext.error(makeError("Billing is not initialized", BILLING_NOT_INITIALIZED));
@@ -270,6 +255,17 @@ public class InAppBillingV6 extends CordovaPlugin {
       }
     };
     if(subscribe){
+      if (updateSubscription) {
+        final String oldSku;
+        try {
+          oldSku = args.getString(1);
+        } catch (JSONException e) {
+          callbackContext.error(makeError("Invalid old SKU", INVALID_ARGUMENTS));
+          return false;
+        }
+        extraParams.putStringArrayList("skusToReplace", new ArrayList<>(Collections.singletonList(oldSku)));
+      }
+
       iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
     } else {
       iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
@@ -278,11 +274,15 @@ public class InAppBillingV6 extends CordovaPlugin {
   }
 
   protected boolean subscribe(final JSONArray args, final CallbackContext callbackContext) {
-    return runPayment(args, callbackContext, true);
+    return runPayment(args, callbackContext, true, false);
+  }
+
+  protected boolean update(final JSONArray args, final CallbackContext callbackContext) {
+    return runPayment(args, callbackContext, true, true);
   }
 
   protected boolean buy(final JSONArray args, final CallbackContext callbackContext) {
-    return runPayment(args, callbackContext, false);
+    return runPayment(args, callbackContext, false, false);
   }
 
   protected boolean consumePurchase(final JSONArray args, final CallbackContext callbackContext) {
