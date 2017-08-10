@@ -20,7 +20,7 @@ describe('Android purchases', () => {
           if (name === 'init') {
             assert(typeof success === 'function', 'should define a success callback');
             assert(typeof err === 'function', 'should define an error callback');
-            assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+            assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
             assert(args.length === 0, 'args should be empty');
             initCalled = true;
             success();
@@ -44,7 +44,7 @@ describe('Android purchases', () => {
           if (name === 'getSkuDetails') {
             assert(typeof success === 'function', 'should define a success callback');
             assert(typeof err === 'function', 'should define an error callback');
-            assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+            assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
             assert.deepEqual(args, productIds, 'should get productIds as args');
             getSkuDetailsCalled = true;
             success([]);
@@ -167,7 +167,7 @@ describe('Android purchases', () => {
         GLOBAL.window.cordova.exec = (success, err, pluginName, name, args) => {
           assert(typeof success === 'function', 'should define a success callback');
           assert(typeof err === 'function', 'should define an error callback');
-          assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+          assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
           assert(name === 'buy', 'invalid function name');
           assert(args[0] === productId, 'should get productId as args');
           success({ orderId, purchaseToken });
@@ -263,7 +263,7 @@ describe('Android purchases', () => {
         GLOBAL.window.cordova.exec = (success, err, pluginName, name, args) => {
           assert(typeof success === 'function', 'should define a success callback');
           assert(typeof err === 'function', 'should define an error callback');
-          assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+          assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
           assert(name === 'subscribe', 'invalid function name');
           assert(args[0] === productId, 'should get productId as args');
           success({ orderId, purchaseToken });
@@ -288,6 +288,43 @@ describe('Android purchases', () => {
 
   });
 
+  describe('#update()', () => {
+
+    it('should call the Android update() function with the correct args ', async (done) => {
+      try {
+        const productId = 'com.test.prod1';
+        const oldProductId = 'com.test.oldprod'
+        const orderId = '_some_order_id_';
+        const purchaseToken = '_some_purchase_token_';
+        GLOBAL.window.cordova.exec = (success, err, pluginName, name, args) => {
+          assert(typeof success === 'function', 'should define a success callback');
+          assert(typeof err === 'function', 'should define an error callback');
+          assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
+          assert(name === 'update', 'invalid function name');
+          assert(args[0] === productId, 'should get productId as args');
+          assert(args[1] === oldProductId, 'should get oldProductId as args');
+          success({ orderId, purchaseToken });
+        };
+        await inAppPurchase.update(productId, oldProductId);
+        done();
+      } catch (err) {
+        done(err);
+      }
+    });
+
+    it('should return an errorCode property when there is an error', async (done) => {
+      try {
+        GLOBAL.window.cordova.exec = execError(-1);
+        await inAppPurchase.update('com.test.prod1', 'com.test.oldprod');
+        done(new Error('Call to #update() suceeded but was expected to fail.'));
+      } catch (err) {
+        assert(err.errorCode === -1, 'should create an errorCode property');
+        done();
+      }
+    });
+
+  });
+
   describe('#consume()', () => {
 
     it('should call the Android consume() function with the correct args ', async (done) => {
@@ -298,7 +335,7 @@ describe('Android purchases', () => {
         GLOBAL.window.cordova.exec = (success, err, pluginName, name, args) => {
           assert(typeof success === 'function', 'should define a success callback');
           assert(typeof err === 'function', 'should define an error callback');
-          assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+          assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
           assert(name === 'consumePurchase', 'invalid function name');
           assert(args[0] === type, 'should get type as args 1');
           assert(args[1] === receipt, 'should get receipt as args 2');
@@ -337,7 +374,7 @@ describe('Android purchases', () => {
           if (name === 'init') {
             assert(typeof success === 'function', 'should define a success callback');
             assert(typeof err === 'function', 'should define an error callback');
-            assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+            assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
             assert(args.length === 0, 'args should be empty');
             initCalled = true;
             success();
@@ -359,7 +396,7 @@ describe('Android purchases', () => {
           if (name === 'restorePurchases') {
             assert(typeof success === 'function', 'should define a success callback');
             assert(typeof err === 'function', 'should define an error callback');
-            assert(pluginName === 'InAppBillingV3', 'invalid Android plugin name');
+            assert(pluginName === 'InAppBillingV6', 'invalid Android plugin name');
             success([{}]);
           } else if (name === 'init') {
             success();

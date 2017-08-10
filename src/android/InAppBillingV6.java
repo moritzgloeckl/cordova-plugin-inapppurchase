@@ -31,9 +31,12 @@ import com.alexdisler.inapppurchases.IabHelper.OnConsumeFinishedListener;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
-public class InAppBillingV3 extends CordovaPlugin {
+public class InAppBillingV6 extends CordovaPlugin {
+
+  public static final int BILLING_API_VERSION = 6;
 
   protected static final String TAG = "google.payments";
 
@@ -164,6 +167,8 @@ public class InAppBillingV3 extends CordovaPlugin {
       return buy(args, callbackContext);
     } else if ("subscribe".equals(action)) {
       return subscribe(args, callbackContext);
+    } else if ("update".equals(action)) {
+      return update(args, callbackContext);
     } else if ("consumePurchase".equals(action)) {
       return consumePurchase(args, callbackContext);
     } else if ("getSkuDetails".equals(action)) {
@@ -196,7 +201,7 @@ public class InAppBillingV3 extends CordovaPlugin {
     return true;
   }
 
-  protected boolean runPayment(final JSONArray args, final CallbackContext callbackContext, boolean subscribe) {
+  protected boolean runPayment(final JSONArray args, final CallbackContext callbackContext, boolean subscribe, boolean updateSubscription) {
     final String sku;
     try {
       sku = args.getString(0);
@@ -204,6 +209,9 @@ public class InAppBillingV3 extends CordovaPlugin {
       callbackContext.error(makeError("Invalid SKU", INVALID_ARGUMENTS));
       return false;
     }
+
+    final Bundle extraParams = new Bundle();
+
     if (iabHelper == null || !billingInitialized) {
       callbackContext.error(makeError("Billing is not initialized", BILLING_NOT_INITIALIZED));
       return false;
@@ -247,19 +255,34 @@ public class InAppBillingV3 extends CordovaPlugin {
       }
     };
     if(subscribe){
-      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "");
+      if (updateSubscription) {
+        final String oldSku;
+        try {
+          oldSku = args.getString(1);
+        } catch (JSONException e) {
+          callbackContext.error(makeError("Invalid old SKU", INVALID_ARGUMENTS));
+          return false;
+        }
+        extraParams.putStringArrayList("skusToReplace", new ArrayList<>(Collections.singletonList(oldSku)));
+      }
+
+      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
     } else {
-      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "");
+      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
     }
     return true;
   }
 
   protected boolean subscribe(final JSONArray args, final CallbackContext callbackContext) {
-    return runPayment(args, callbackContext, true);
+    return runPayment(args, callbackContext, true, false);
+  }
+
+  protected boolean update(final JSONArray args, final CallbackContext callbackContext) {
+    return runPayment(args, callbackContext, true, true);
   }
 
   protected boolean buy(final JSONArray args, final CallbackContext callbackContext) {
-    return runPayment(args, callbackContext, false);
+    return runPayment(args, callbackContext, false, false);
   }
 
   protected boolean consumePurchase(final JSONArray args, final CallbackContext callbackContext) {
