@@ -83,7 +83,9 @@ inAppPurchase.getProducts = function (productIds) {
               title: val.title,
               description: val.description,
               price: val.price,
+              priceAsDecimal: val.priceAsDecimal,
               currency: val.currency
+
             };
           });
           resolve(arr);
