@@ -14,6 +14,7 @@ package com.alexdisler.inapppurchases;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -210,6 +211,15 @@ public class InAppBillingV6 extends CordovaPlugin {
       return false;
     }
 
+    String developerPayload = "";
+    if (args.length() > 1 || (updateSubscription && args.length() > 2)) {
+      try {
+        developerPayload = args.getString((updateSubscription) ? 2 : 1);
+      } catch (JSONException e) {
+            //Ignore the error when no developer payload was specified
+      }
+    }
+
     final Bundle extraParams = new Bundle();
 
     if (iabHelper == null || !billingInitialized) {
@@ -247,6 +257,7 @@ public class InAppBillingV6 extends CordovaPlugin {
             pluginResponse.put("signature", purchase.getSignature());
             pluginResponse.put("type", purchase.getItemType());
             pluginResponse.put("receipt", purchase.getOriginalJson());
+            pluginResponse.put("developerPayload", purchase.getDeveloperPayload());
             callbackContext.success(pluginResponse);
           } catch (JSONException e) {
             callbackContext.error("Purchase succeeded but success handler failed");
@@ -255,6 +266,7 @@ public class InAppBillingV6 extends CordovaPlugin {
       }
     };
     if(subscribe){
+
       if (updateSubscription) {
         final String oldSku;
         try {
@@ -266,9 +278,10 @@ public class InAppBillingV6 extends CordovaPlugin {
         extraParams.putStringArrayList("skusToReplace", new ArrayList<>(Collections.singletonList(oldSku)));
       }
 
-      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
+
+      iabHelper.launchSubscriptionPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, developerPayload, extraParams);
     } else {
-      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, "", extraParams);
+      iabHelper.launchPurchaseFlow(cordovaActivity, sku, newOrder, oipfl, developerPayload, extraParams);
     }
     return true;
   }
@@ -399,6 +412,7 @@ public class InAppBillingV6 extends CordovaPlugin {
                 detailsJson.put("signature", purchase.getSignature());
                 detailsJson.put("type", purchase.getItemType());
                 detailsJson.put("receipt", purchase.getOriginalJson());
+                detailsJson.put("developerPayload", purchase.getDeveloperPayload());
                 response.put(detailsJson);
               }
             }

@@ -58,18 +58,19 @@ inAppPurchase.getProducts = (productIds) => {
   });
 };
 
-const executePaymentOfType = (type, productId, oldProductId) => {
+const executePaymentOfType = (type, productId, oldProductId, developerPayload) => {
   return new Promise((resolve, reject) => {
     if (!inAppPurchase.utils.validString(productId)) {
       reject(new Error(inAppPurchase.utils.errors[102]));
     } else {
-      nativeCall(type, [productId, oldProductId]).then((res) => {
+      nativeCall(type, [productId, oldProductId, developerPayload]).then((res) => {
         resolve({
           signature: res.signature,
           productId: res.productId,
           transactionId: res.purchaseToken,
           type : res.type,
           productType : res.type,
+          developerPayload: res.developerPayload,
           receipt : res.receipt,
         });
       }).catch(reject);
@@ -77,16 +78,16 @@ const executePaymentOfType = (type, productId, oldProductId) => {
   });
 };
 
-inAppPurchase.buy = (productId) => {
-  return executePaymentOfType('buy', productId, null);
+inAppPurchase.buy = (productId, developerPayload) => {
+  return executePaymentOfType('buy', productId, null, developerPayload);
 };
 
-inAppPurchase.subscribe = (productId) => {
-  return executePaymentOfType('subscribe', productId, null);
+inAppPurchase.subscribe = (productId, developerPayload) => {
+  return executePaymentOfType('subscribe', productId, null, developerPayload);
 };
 
-inAppPurchase.update = (productId, oldProductId) => {
-  return executePaymentOfType('update', productId, oldProductId);
+inAppPurchase.update = (productId, oldProductId, developerPayload) => {
+  return executePaymentOfType('update', productId, oldProductId, developerPayload);
 };
 
 inAppPurchase.consume = (type, receipt, signature) => {
@@ -120,6 +121,7 @@ inAppPurchase.restorePurchases = () => {
             type : val.type,
             productType : val.type,
             signature: val.signature,
+            developerPayload: val.developerPayload,
             receipt : val.receipt,
           };
         });

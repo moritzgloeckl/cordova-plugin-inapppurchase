@@ -35,7 +35,10 @@ import com.android.vending.billing.IInAppBillingService;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static com.alexdisler.inapppurchases.InAppBillingV6.BILLING_API_VERSION;
 
@@ -72,13 +75,14 @@ import static com.alexdisler.inapppurchases.InAppBillingV6.BILLING_API_VERSION;
  *
  */
 public class IabHelper {
+
     // Is debug logging enabled?
     boolean mDebugLog = false;
     String mDebugTag = "IabHelper";
 
     // Can we skip the online purchase verification?
     // (Only allowed if the app is debuggable)
-	private boolean mSkipPurchaseVerification = false;
+    private boolean mSkipPurchaseVerification = false;
 
     // Is setup done?
     boolean mSetupDone = false;
@@ -154,6 +158,9 @@ public class IabHelper {
     // some fields on the getSkuDetails response bundle
     public static final String GET_SKU_DETAILS_ITEM_LIST = "ITEM_ID_LIST";
     public static final String GET_SKU_DETAILS_ITEM_TYPE_LIST = "ITEM_TYPE_LIST";
+
+    // batch Size
+    public static final int QUERY_SKU_DETAILS_BATCH_SIZE = 20;
 
     /**
      * Creates an instance. After creation, it will not yet be ready to use. You must perform
@@ -911,48 +918,68 @@ public class IabHelper {
         return verificationFailed ? IABHELPER_VERIFICATION_FAILED : BILLING_RESPONSE_RESULT_OK;
     }
 
-    int querySkuDetails(String itemType, Inventory inv, List<String> moreSkus)
-                                throws RemoteException, JSONException {
+    int querySkuDetails(String itemType, Inventory inv, List<String> moreSkus) throws RemoteException, JSONException {
         logDebug("Querying SKU details.");
-        ArrayList<String> skuList = new ArrayList<String>();
-        skuList.addAll(inv.getAllOwnedSkus(itemType));
+
+        Set<String> storeSkus = new TreeSet<String>();
+        final List<String> allOwnedSkus = inv.getAllOwnedSkus(itemType);
+        storeSkus.addAll(inv.getAllOwnedSkus(itemType));
+
         if (moreSkus != null) {
             for (String sku : moreSkus) {
-                if (!skuList.contains(sku)) {
-                    skuList.add(sku);
+                if (!storeSkus.contains(sku)) {
+                    storeSkus.add(sku);
                 }
             }
         }
 
-        if (skuList.size() == 0) {
-            logDebug("queryPrices: nothing to do because there are no SKUs.");
+        if (storeSkus.size() == 0) {
+            logDebug("querySkuDetails: nothing to do because there are no SKUs.");
             return BILLING_RESPONSE_RESULT_OK;
         }
 
-        Bundle querySkus = new Bundle();
-        querySkus.putStringArrayList(GET_SKU_DETAILS_ITEM_LIST, skuList);
-        Bundle skuDetails = mService.getSkuDetails(3, mContext.getPackageName(),
-                itemType, querySkus);
-
-        if (!skuDetails.containsKey(RESPONSE_GET_SKU_DETAILS_LIST)) {
-            int response = getResponseCodeFromBundle(skuDetails);
-            if (response != BILLING_RESPONSE_RESULT_OK) {
-                logDebug("getSkuDetails() failed: " + getResponseDesc(response));
-                return response;
-            }
-            else {
-                logError("getSkuDetails() returned a bundle with neither an error nor a detail list.");
-                return IABHELPER_BAD_RESPONSE;
+        // Split the sku list in blocks of no more than QUERY_SKU_DETAILS_BATCH_SIZE elements.
+        ArrayList<ArrayList<String>> batches = new ArrayList<>();
+        ArrayList<String> tmpBatch = new ArrayList<>(QUERY_SKU_DETAILS_BATCH_SIZE);
+        int iSku = 0;
+        for (String sku : storeSkus) {
+            tmpBatch.add(sku);
+            iSku++;
+            if (tmpBatch.size() == QUERY_SKU_DETAILS_BATCH_SIZE || iSku == storeSkus.size()) {
+                batches.add(tmpBatch);
+                tmpBatch = new ArrayList<>(QUERY_SKU_DETAILS_BATCH_SIZE);
             }
         }
 
-        ArrayList<String> responseList = skuDetails.getStringArrayList(
-                RESPONSE_GET_SKU_DETAILS_LIST);
+        logDebug("querySkuDetails() batches: " + batches.size() + ", " + batches);
 
-        for (String thisResponse : responseList) {
-            SkuDetails d = new SkuDetails(itemType, thisResponse);
-            logDebug("Got sku details: " + d);
-            inv.addSkuDetails(d);
+        for (ArrayList<String> batch : batches) {
+            Bundle querySkus = new Bundle();
+            querySkus.putStringArrayList(GET_SKU_DETAILS_ITEM_LIST, batch);
+            if (mService == null) {
+                logError("unable to get sku details: service is not connected.");
+                return IABHELPER_BAD_RESPONSE;
+            }
+            Bundle skuDetails = mService.getSkuDetails(3, mContext.getPackageName(), itemType, querySkus);
+
+            if (!skuDetails.containsKey(RESPONSE_GET_SKU_DETAILS_LIST)) {
+                int response = getResponseCodeFromBundle(skuDetails);
+                if (response != BILLING_RESPONSE_RESULT_OK) {
+                    logDebug("getSkuDetails() failed: " + getResponseDesc(response));
+                    return response;
+                } else {
+                    logError("getSkuDetails() returned a bundle with neither an error nor a detail list.");
+                    return IABHELPER_BAD_RESPONSE;
+                }
+            }
+
+            ArrayList<String> responseList = skuDetails.getStringArrayList(RESPONSE_GET_SKU_DETAILS_LIST);
+
+            for (String thisResponse : responseList) {
+                SkuDetails d = new SkuDetails(itemType, thisResponse);
+                logDebug("Got sku details: " + d);
+                inv.addSkuDetails(d);
+            }
         }
         return BILLING_RESPONSE_RESULT_OK;
     }
