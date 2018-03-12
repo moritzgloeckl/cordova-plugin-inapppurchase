@@ -251,7 +251,7 @@ Coverage report:
 - [Robot Media](https://github.com/robotmedia)
 - [MobileChromeApps](https://github.com/MobileChromeApps)
 
-<img src="https://p14.zdusercontent.com/attachment/1015988/bQSKoDX6f0wFHgQX5PqcY6RPn?token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..CINlDLGVYe8_PLi59oAt2w.KLGb0ialcVz6nEeQ70nOmFqY7Jm_33FXhByfoz_Oo8DiGKoZGluzj8_Yfj5Arp8z8NWWXWZJlNEgHnfiRwgU7sqQZLa-p9n7_m0gs1MR-OKUey3x52Q9YamlIBENJzqthLUsE1Nex-EdYytMDZgE_MLj_FD43h3Pw2ReUYMuhgInWv57ir2F_1OGo-QY82vDe7oND5_ORKypxlM192A7vvgAfi8-BRp1kEDGZjcW6D8RqKZspyvmyWJtFXL8oDwpDT-wTKP7iSu2mDZpV2C7iulljN490QjsZT7mtKjQ7fk.88lQA6YhrW9Ky64D5nYSqg" width="300" /> 
+<a href="https://www.browserstack.com/"><img src="https://p14.zdusercontent.com/attachment/1015988/bQSKoDX6f0wFHgQX5PqcY6RPn?token=eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..CINlDLGVYe8_PLi59oAt2w.KLGb0ialcVz6nEeQ70nOmFqY7Jm_33FXhByfoz_Oo8DiGKoZGluzj8_Yfj5Arp8z8NWWXWZJlNEgHnfiRwgU7sqQZLa-p9n7_m0gs1MR-OKUey3x52Q9YamlIBENJzqthLUsE1Nex-EdYytMDZgE_MLj_FD43h3Pw2ReUYMuhgInWv57ir2F_1OGo-QY82vDe7oND5_ORKypxlM192A7vvgAfi8-BRp1kEDGZjcW6D8RqKZspyvmyWJtFXL8oDwpDT-wTKP7iSu2mDZpV2C7iulljN490QjsZT7mtKjQ7fk.88lQA6YhrW9Ky64D5nYSqg" width="300" /></a>
 For helping us test our plugin on several different mobile devices and browsers!
 
 ## More
